@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Role-Based Authentication</title>
+    
+    <!-- Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <!-- DataTables for better table management -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .main-content {
+            padding: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .user-table {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        .table thead th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 500;
+            border: none;
+        }
+        .role-badge {
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .role-badge.admin {
+            background: #ff4757;
+            color: white;
+        }
+        .role-badge.manager {
+            background: #ffa502;
+            color: white;
+        }
+        .role-badge.user {
+            background: #26de81;
+            color: white;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-badge.active {
+            background: #26de81;
+            color: white;
+        }
+        .status-badge.inactive {
+            background: #747d8c;
+            color: white;
+        }
+        .status-badge.suspended {
+            background: #ff4757;
+            color: white;
+        }
+        .action-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 3px;
+            transition: all 0.3s;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+        .filter-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+        .log-entry {
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="sidebar p-3">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-shield-lock-fill" style="font-size: 3rem;"></i>
+                        <h5 class="mt-2">AuthSystem Admin</h5>
+                    </div>
+                    
+                    <div class="user-info text-center mb-4 p-3 bg-white bg-opacity-10 rounded">
+                        <i class="bi bi-person-circle" style="font-size: 3rem;"></i>
+                        <h6 class="mt-2" id="adminName">Loading...</h6>
+                        <span class="badge bg-danger">Admin</span>
+                    </div>
+                    
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+                            <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('users')">
+                            <i class="bi bi-people me-2"></i> User Management
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('roles')">
+                            <i class="bi bi-shield me-2"></i> Role Management
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('logs')">
+                            <i class="bi bi-journal-text me-2"></i> Activity Logs
+                        </a>
+                        <a class="nav-link" href="#" onclick="showSection('security')">
+                            <i class="bi bi-lock me-2"></i> Security
+                        </a>
+                        <a class="nav-link" href="dashboard.html">
+                            <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+                        </a>
+                        <hr class="bg-white">
+                        <a class="nav-link text-danger" href="#" id="logoutBtn">
+                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Admin Header -->
+                <div class="admin-header" data-aos="fade-up">
+                    <h2>Admin Panel</h2>
+                    <p class="mb-0 opacity-75">Manage users, roles, and monitor system activity</p>
+                </div>
+                
+                <!-- Dynamic Content Sections -->
+                <div id="dashboardSection">
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4" data-aos="fade-up" data-aos-delay="100">
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon me-3">
+                                        <i class="bi bi-people"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-muted mb-1">Total Users</h6>
+                                        <h2 class="mb-0" id="totalUsers">0</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon me-3">
+                                        <i class="bi bi-person-check"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-muted mb-1">Active Today</h6>
+                                        <h2 class="mb-0" id="activeToday">0</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon me-3">
+                                        <i class="bi bi-shield"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-muted mb-1">Admins</h6>
+                                        <h2 class="mb-0" id="totalAdmins">0</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="stat-card">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon me-3">
+                                        <i class="bi bi-exclamation-triangle"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-muted mb-1">Suspicious Logins</h6>
+                                        <h2 class="mb-0" id="suspiciousLogins">0</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3" data-aos="fade-up" data-aos-delay="200">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">User Distribution by Role</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="userRoleChart" style="height: 300px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" data-aos="fade-up" data-aos-delay="300">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Login Activity (Last 7 Days)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="loginActivityChart" style="height: 300px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Users -->
+                    <div class="row">
+                        <div class="col-12" data-aos="fade-up" data-aos-delay="400">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Recent Users</h5>
+                                    <button class="btn btn-sm btn-primary" onclick="showSection('users')">
+                                        View All
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Email</th>
+                                                    <th>Role</th>
+                                                    <th>Status</th>
+                                                    <th>Joined</th>
+                                                    <th>Last Login</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="recentUsersTable">
+                                                <tr>
+                                                    <td colspan="5" class="text-center">
+                                                        <div class="spinner-border text-primary" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Users Management Section (Initially Hidden) -->
+                <div id="usersSection" style="display: none;">
+                    <div class="filter-card" data-aos="fade-up">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <input type="text" class="form-control" id="searchUser" placeholder="Search users...">
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="filterRole">
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="manager">Manager</option>
+                                    <option value="user">User</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select class="form-select" id="filterStatus">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="suspended">Suspended</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100" onclick="applyFilters()">
+                                    <i class="bi bi-funnel"></i> Apply Filters
+                                </button>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <button class="btn btn-success" onclick="exportUsers()">
+                                    <i class="bi bi-download"></i> Export
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="user-table" data-aos="fade-up" data-aos-delay="100">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="usersTable">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Joined</th>
+                                        <th>Last Login</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allUsersTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Logs Section (Initially Hidden) -->
+                <div id="logsSection" style="display: none;">
+                    <div class="filter-card" data-aos="fade-up">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select class="form-select" id="logType">
+                                    <option value="all">All Logs</option>
+                                    <option value="login">Login Logs</option>
+                                    <option value="activity">Activity Logs</option>
+                                    <option value="security">Security Logs</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" class="form-control" id="logDate">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="searchLog" placeholder="Search logs...">
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100" onclick="refreshLogs()">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card shadow-sm" data-aos="fade-up" data-aos-delay="100">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">System Activity Logs</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="logsContainer">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Roles Management Section (Initially Hidden) -->
+                <div id="rolesSection" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-4 mb-3" data-aos="fade-up">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Admin Role</h5>
+                                </div>
+                                <div class="card-body">
+                                    <span class="badge bg-danger mb-3">Highest Privileges</span>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Full system access</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> User management</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Role assignment</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> View all logs</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> System configuration</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3" data-aos="fade-up" data-aos-delay="100">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Manager Role</h5>
+                                </div>
+                                <div class="card-body">
+                                    <span class="badge bg-warning mb-3">Moderate Privileges</span>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> View reports</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Manage regular users</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> View activity logs</li>
+                                        <li><i class="bi bi-x-circle-fill text-danger me-2"></i> Cannot assign roles</li>
+                                        <li><i class="bi bi-x-circle-fill text-danger me-2"></i> Cannot delete users</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3" data-aos="fade-up" data-aos-delay="200">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">User Role</h5>
+                                </div>
+                                <div class="card-body">
+                                    <span class="badge bg-success mb-3">Basic Privileges</span>
+                                    <ul class="list-unstyled">
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> View own profile</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> Edit own profile</li>
+                                        <li><i class="bi bi-check-circle-fill text-success me-2"></i> View personal dashboard</li>
+                                        <li><i class="bi bi-x-circle-fill text-danger me-2"></i> Cannot manage others</li>
+                                        <li><i class="bi bi-x-circle-fill text-danger me-2"></i> Cannot view logs</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Security Section (Initially Hidden) -->
+                <div id="securitySection" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3" data-aos="fade-up">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Security Overview</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="securityChart" style="height: 300px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3" data-aos="fade-up" data-aos-delay="100">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Recent Security Alerts</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="securityAlerts">
+                                        <!-- Security alerts will be loaded here -->
+                                        <div class="text-center text-muted py-4">
+                                            <i class="bi bi-shield-check display-4"></i>
+                                            <p class="mt-2">No security alerts</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-12" data-aos="fade-up" data-aos-delay="200">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">Security Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch mb-3">
+                                                <input class="form-check-input" type="checkbox" id="emailVerification" checked>
+                                                <label class="form-check-label" for="emailVerification">Require Email Verification</label>
+                                            </div>
+                                            <div class="form-check form-switch mb-3">
+                                                <input class="form-check-input" type="checkbox" id="passwordPolicy" checked>
+                                                <label class="form-check-label" for="passwordPolicy">Enforce Strong Password Policy</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check form-switch mb-3">
+                                                <input class="form-check-input" type="checkbox" id="sessionTimeout" checked>
+                                                <label class="form-check-label" for="sessionTimeout">Enable Session Timeout</label>
+                                            </div>
+                                            <div class="form-check form-switch mb-3">
+                                                <input class="form-check-input" type="checkbox" id="ipTracking" checked>
+                                                <label class="form-check-label" for="ipTracking">Enable IP Tracking</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-primary mt-3" onclick="saveSecuritySettings()">
+                                        Save Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" id="editRole">
+                                <option value="user">User</option>
+                                <option value="manager">Manager</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="editStatus">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUserChanges()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/0.7.35/ua-parser.min.js"></script>
+    
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        AOS.init();
+        
+        let currentEditingUserId = null;
+        
+        // Check admin access on load
+        document.addEventListener('DOMContentLoaded', async function() {
+            const user = auth.currentUser;
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const role = await getUserRole(user.uid);
+            if (role !== 'admin') {
+                window.location.href = 'dashboard.html';
+                return;
+            }
+            
+            document.getElementById('adminName').textContent = user.email;
+            loadAdminDashboard();
+        });
+        
+        // Show different sections
+        function showSection(section) {
+            // Hide all sections
+            document.getElementById('dashboardSection').style.display = 'none';
+            document.getElementById('usersSection').style.display = 'none';
+            document.getElementById('logsSection').style.display = 'none';
+            document.getElementById('rolesSection').style.display = 'none';
+            document.getElementById('securitySection').style.display = 'none';
+            
+            // Show selected section
+            document.getElementById(section + 'Section').style.display = 'block';
+            
+            // Load section data
+            if (section === 'users') {
+                loadAllUsers();
+            } else if (section === 'logs') {
+                loadSystemLogs();
+            } else if (section === 'security') {
+                loadSecurityData();
+            }
+        }
+        
+        // Load all users
+        async function loadAllUsers() {
+            try {
+                const users = await getAllUsers();
+                const tbody = document.getElementById('allUsersTable');
+                
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.email}</td>
+                        <td><span class="role-badge ${user.role}">${user.role}</span></td>
+                        <td><span class="status-badge ${user.accountStatus}">${user.accountStatus}</span></td>
+                        <td>${user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</td>
+                        <td>${user.lastLogin ? new Date(user.lastLogin.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary action-btn" onclick="openEditUserModal('${user.uid}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger action-btn" onclick="deleteUser('${user.uid}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+        
+        // Open edit user modal
+        async function openEditUserModal(userId) {
+            try {
+                const userDoc = await db.collection('users').doc(userId).get();
+                const userData = userDoc.data();
+                
+                currentEditingUserId = userId;
+                document.getElementById('editEmail').value = userData.email;
+                document.getElementById('editRole').value = userData.role;
+                document.getElementById('editStatus').value = userData.accountStatus;
+                
+                new bootstrap.Modal(document.getElementById('editUserModal')).show();
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            }
+        }
+        
+        // Save user changes
+        async function saveUserChanges() {
+            const newRole = document.getElementById('editRole').value;
+            const newStatus = document.getElementById('editStatus').value;
+            
+            try {
+                await updateUserRole(currentEditingUserId, newRole);
+                await updateUserStatus(currentEditingUserId, newStatus);
+                
+                Swal.fire('Success!', 'User updated successfully', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                loadAllUsers();
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            }
+        }
+        
+        // Delete user
+        async function deleteUser(userId) {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            });
+            
+            if (result.isConfirmed) {
+                try {
+                    await db.collection('users').doc(userId).delete();
+                    await auth.currentUser.delete(); // This requires recent login
+                    
+                    Swal.fire('Deleted!', 'User has been deleted.', 'success');
+                    loadAllUsers();
+                } catch (error) {
+                    Swal.fire('Error!', error.message, 'error');
+                }
+            }
+        }
+        
+        // Load system logs
+        async function loadSystemLogs() {
+            try {
+                const logs = await getActivityLogs(100);
+                const container = document.getElementById('logsContainer');
+                
+                container.innerHTML = logs.map(log => `
+                    <div class="log-entry">
+                        <div class="d-flex justify-content-between">
+                            <strong>${log.action}</strong>
+                            <small class="text-muted">${log.timestamp ? new Date(log.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</small>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge bg-${log.status === 'success' ? 'success' : 'danger'}">${log.status}</span>
+                            <small class="text-muted ms-2">User: ${log.email}</small>
+                        </div>
+                        ${log.error ? `<div class="text-danger mt-1"><small>Error: ${log.error}</small></div>` : ''}
+                        ${log.metadata ? `<div class="text-muted mt-1"><small>${JSON.stringify(log.metadata)}</small></div>` : ''}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading logs:', error);
+            }
+        }
+        
+        // Apply filters to users table
+        function applyFilters() {
+            // Implement filtering logic
+            loadAllUsers();
+        }
+        
+        // Export users to CSV
+        function exportUsers() {
+            // Implement export logic
+            Swal.fire('Coming Soon', 'Export functionality will be available soon!', 'info');
+        }
+        
+        // Refresh logs
+        function refreshLogs() {
+            loadSystemLogs();
+        }
+        
+        // Load security data
+        function loadSecurityData() {
+            // Implement security data loading
+            const ctx = document.getElementById('securityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Normal', 'Suspicious', 'Blocked'],
+                    datasets: [{
+                        data: [85, 10, 5],
+                        backgroundColor: ['#26de81', '#ffa502', '#ff4757']
+                    }]
+                }
+            });
+        }
+        
+        // Save security settings
+        function saveSecuritySettings() {
+            Swal.fire('Success!', 'Security settings saved successfully!', 'success');
+        }
+    </script>
+</body>
+</html>

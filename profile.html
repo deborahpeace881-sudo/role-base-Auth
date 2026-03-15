@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Role-Based Authentication</title>
+    
+    <!-- Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .profile-container {
+            max-width: 900px;
+            margin: 50px auto;
+        }
+        .profile-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .profile-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid white;
+            margin-bottom: 20px;
+            object-fit: cover;
+        }
+        .profile-body {
+            padding: 40px;
+        }
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .info-label {
+            color: #6c757d;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        .nav-tabs {
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 30px;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 600;
+            padding: 12px 25px;
+            margin-right: 10px;
+            border-radius: 10px 10px 0 0;
+        }
+        .nav-tabs .nav-link.active {
+            color: #667eea;
+            background: none;
+            border-bottom: 3px solid #667eea;
+        }
+        .nav-tabs .nav-link:hover {
+            border: none;
+            color: #667eea;
+        }
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        .activity-badge {
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 50px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .security-score {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+        .security-score .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: 700;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container profile-container">
+        <div class="profile-card" data-aos="fade-up">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <img src="https://via.placeholder.com/120" alt="Profile" class="profile-avatar" id="profileAvatar">
+                <h3 id="profileName">Loading...</h3>
+                <p id="profileEmail">Loading...</p>
+                <span class="badge bg-light text-dark" id="profileRole">Loading...</span>
+            </div>
+            
+            <!-- Profile Body -->
+            <div class="profile-body">
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button">
+                            <i class="bi bi-person"></i> Profile
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button">
+                            <i class="bi bi-shield"></i> Security
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button">
+                            <i class="bi bi-clock-history"></i> Activity
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="sessions-tab" data-bs-toggle="tab" data-bs-target="#sessions" type="button">
+                            <i class="bi bi-devices"></i> Sessions
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Tab Content -->
+                <div class="tab-content" id="profileTabContent">
+                    <!-- Profile Tab -->
+                    <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                        <form id="profileForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="displayName" placeholder="Enter your full name">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="profileEmailInput" readonly>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phoneNumber" placeholder="Enter phone number">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Location</label>
+                                    <input type="text" class="form-control" id="location" placeholder="Enter your location">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Bio</label>
+                                <textarea class="form-control" id="bio" rows="3" placeholder="Tell us about yourself"></textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-card">
+                                        <div class="info-label">Member Since</div>
+                                        <div class="info-value" id="memberSince">Loading...</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-card">
+                                        <div class="info-label">Last Login</div>
+                                        <div class="info-value" id="lastLogin">Loading...</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-save" id="saveProfileBtn">
+                                    <span class="spinner-border spinner-border-sm d-none" id="profileSpinner"></span>
+                                    <span id="profileBtnText">Save Changes</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Security Tab -->
+                    <div class="tab-pane fade" id="security" role="tabpanel">
+                        <div class="security-score">
+                            <canvas id="securityScoreChart"></canvas>
+                            <div class="score-value" id="securityScoreValue">95%</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="info-card">
+                                    <h6>Email Verification</h6>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-check-circle-fill text-success me-2" id="emailVerifiedIcon"></i>
+                                        <span id="emailVerifiedStatus">Verified</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="info-card">
+                                    <h6>Two-Factor Authentication</h6>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="twoFactorAuth">
+                                        <label class="form-check-label" for="twoFactorAuth">Enable 2FA</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="info-card">
+                            <h6>Change Password</h6>
+                            <form id="passwordChangeForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="currentPassword">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="newPassword">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirmNewPassword">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Password</button>
+                            </form>
+                        </div>
+                        
+                        <div class="info-card">
+                            <h6>Recent Security Events</h6>
+                            <div id="securityEvents">
+                                <div class="text-muted">No recent security events</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Activity Tab -->
+                    <div class="tab-pane fade" id="activity" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Recent Activity</h5>
+                            <button class="btn btn-sm btn-outline-primary" onclick="refreshActivity()">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                        </div>
+                        
+                        <div id="userActivity">
+                            <!-- Activity will be loaded here -->
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sessions Tab -->
+                    <div class="tab-pane fade" id="sessions" role="tabpanel">
+                        <h5 class="mb-3">Active Sessions</h5>
+                        
+                        <div class="info-card current-session">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6>Current Session</h6>
+                                    <p class="mb-0 text-muted" id="currentDevice">Loading...</p>
+                                    <small class="text-muted" id="currentLocation">Loading...</small>
+                                </div>
+                                <span class="badge bg-success">Active Now</span>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mb-3 mt-4">Other Sessions</h5>
+                        <div id="otherSessions">
+                            <!-- Other sessions will be loaded here -->
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <button class="btn btn-danger" onclick="logoutAllSessions()">
+                                <i class="bi bi-box-arrow-right"></i> Logout All Other Sessions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/0.7.35/ua-parser.min.js"></script>
+    
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        AOS.init();
+        
+        // Load profile data
+        document.addEventListener('DOMContentLoaded', function() {
+            auth.onAuthStateChanged(async user => {
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                await loadUserProfile(user);
+                loadActivityLog();
+                loadSecurityScore();
+                loadDeviceInfo();
+            });
+        });
+        
+        // Load user profile
+        async function loadUserProfile(user) {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                const userData = userDoc.data();
+                
+                document.getElementById('profileName').textContent = userData.displayName || user.email;
+                document.getElementById('profileEmail').textContent = user.email;
+                document.getElementById('profileRole').textContent = userData.role;
+                document.getElementById('profileEmailInput').value = user.email;
+                
+                document.getElementById('displayName').value = userData.displayName || '';
+                document.getElementById('phoneNumber').value = userData.phoneNumber || '';
+                document.getElementById('location').value = userData.location || '';
+                document.getElementById('bio').value = userData.bio || '';
+                
+                document.getElementById('memberSince').textContent = 
+                    userData.createdAt ? new Date(userData.createdAt.seconds * 1000).toLocaleDateString() : 'N/A';
+                document.getElementById('lastLogin').textContent = 
+                    userData.lastLogin ? new Date(userData.lastLogin.seconds * 1000).toLocaleString() : 'N/A';
+                
+                // Email verification status
+                if (user.emailVerified) {
+                    document.getElementById('emailVerifiedIcon').className = 'bi bi-check-circle-fill text-success me-2';
+                    document.getElementById('emailVerifiedStatus').textContent = 'Verified';
+                } else {
+                    document.getElementById('emailVerifiedIcon').className = 'bi bi-x-circle-fill text-danger me-2';
+                    document.getElementById('emailVerifiedStatus').textContent = 'Not Verified';
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+        
+        // Load activity log
+        async function loadActivityLog() {
+            try {
+                const snapshot = await db.collection('activityLogs')
+                    .where('userId', '==', auth.currentUser.uid)
+                    .orderBy('timestamp', 'desc')
+                    .limit(10)
+                    .get();
+                
+                const activities = snapshot.docs.map(doc => doc.data());
+                
+                const activityHtml = activities.map(activity => `
+                    <div class="info-card">
+                        <div class="d-flex justify-content-between">
+                            <strong>${activity.action}</strong>
+                            <small class="text-muted">${activity.timestamp ? new Date(activity.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-${activity.status === 'success' ? 'success' : 'danger'}">${activity.status}</span>
+                            ${activity.deviceInfo ? `<small class="text-muted ms-2">${activity.deviceInfo.browser?.name || ''}</small>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('userActivity').innerHTML = 
+                    activities.length ? activityHtml : '<div class="text-muted text-center py-4">No activity found</div>';
+            } catch (error) {
+                console.error('Error loading activity:', error);
+            }
+        }
+        
+        // Load security score
+        function loadSecurityScore() {
+            const ctx = document.getElementById('securityScoreChart').getContext('2d');
+            
+            // Calculate security score based on various factors
+            let score = 95; // Default high score
+            
+            if (!auth.currentUser.emailVerified) score -= 20;
+            // Add more security checks here
+            
+            document.getElementById('securityScoreValue').textContent = score + '%';
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [score, 100 - score],
+                        backgroundColor: ['#667eea', '#e9ecef'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '70%',
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        tooltip: { enabled: false },
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+        
+        // Load device info
+        async function loadDeviceInfo() {
+            const parser = new UAParser();
+            const device = parser.getResult();
+            
+            document.getElementById('currentDevice').innerHTML = `
+                <i class="bi bi-${device.device.type === 'mobile' ? 'phone' : 'laptop'} me-1"></i>
+                ${device.browser.name} on ${device.os.name}
+            `;
+            
+            // Get IP info
+            try {
+                const response = await fetch('https://ipinfo.io/json?token=YOUR_TOKEN_HERE');
+                const ipInfo = await response.json();
+                document.getElementById('currentLocation').innerHTML = `
+                    <i class="bi bi-geo-alt me-1"></i>
+                    ${ipInfo.city}, ${ipInfo.region}, ${ipInfo.country}
+                `;
+            } catch (error) {
+                console.error('Error loading location:', error);
+            }
+        }
+        
+        // Save profile changes
+        document.getElementById('profileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const spinner = document.getElementById('profileSpinner');
+            const btnText = document.getElementById('profileBtnText');
+            
+            spinner.classList.remove('d-none');
+            btnText.textContent = 'Saving...';
+            
+            try {
+                const updates = {
+                    displayName: document.getElementById('displayName').value,
+                    phoneNumber: document.getElementById('phoneNumber').value,
+                    location: document.getElementById('location').value,
+                    bio: document.getElementById('bio').value
+                };
+                
+                await db.collection('users').doc(auth.currentUser.uid).update(updates);
+                
+                await createLog('profile_update', 'success', auth.currentUser.uid);
+                
+                Swal.fire('Success!', 'Profile updated successfully', 'success');
+                
+                // Update display name in header
+                document.getElementById('profileName').textContent = updates.displayName || auth.currentUser.email;
+            } catch (error) {
+                Swal.fire('Error!', error.message, 'error');
+            } finally {
+                spinner.classList.add('d-none');
+                btnText.textContent = 'Save Changes';
+            }
+        });
+        
+        // Password change form
+        document.getElementById('passwordChangeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                Swal.fire('Error!', 'New passwords do not match', 'error');
+                return;
+            }
+            
+            try {
+                const user = auth.currentUser;
+                const credential = firebase.auth.EmailAuthProvider.credential(
+                    user.email, 
+                    currentPassword
+                );
+                
+                await user.reauthenticateWithCredential(credential);
+                await user.updatePassword(newPassword);
+                
+                await createLog('password_change', 'success', user.uid);
+                
+                Swal.fire('Success!', 'Password updated successfully', 'success');
+                
+                // Clear form
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
+            } catch (error) {
+                Swal.fire('Error!', error.message, 'error');
+            }
+        });
+        
+        // Refresh activity
+        function refreshActivity() {
+            loadActivityLog();
+        }
+        
+        // Logout all other sessions
+        async function logoutAllSessions() {
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: "This will log you out from all other devices!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, logout all'
+            });
+            
+            if (result.isConfirmed) {
+                try {
+                    await createLog('logout_all', 'success', auth.currentUser.uid);
+                    Swal.fire('Success!', 'All other sessions have been logged out', 'success');
+                } catch (error) {
+                    Swal.fire('Error!', error.message, 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

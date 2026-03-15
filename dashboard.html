@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Role-Based Authentication</title>
+    
+    <!-- Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .main-content {
+            padding: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        .activity-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+        .activity-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 2px solid white;
+        }
+        .welcome-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .quick-action-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #e9ecef;
+        }
+        .quick-action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+        }
+        .device-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="sidebar p-3">
+                    <div class="text-center mb-4">
+                        <i class="bi bi-shield-lock-fill" style="font-size: 3rem;"></i>
+                        <h5 class="mt-2">AuthSystem</h5>
+                    </div>
+                    
+                    <div class="user-info text-center mb-4 p-3 bg-white bg-opacity-10 rounded">
+                        <i class="bi bi-person-circle" style="font-size: 3rem;"></i>
+                        <h6 class="mt-2" id="userName">Loading...</h6>
+                        <span class="badge bg-light text-dark" id="userRole">Loading...</span>
+                    </div>
+                    
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#" onclick="loadDashboard()">
+                            <i class="bi bi-speedometer2 me-2"></i> Dashboard
+                        </a>
+                        <a class="nav-link" href="#" onclick="loadAnalytics()">
+                            <i class="bi bi-graph-up me-2"></i> Analytics
+                        </a>
+                        <a class="nav-link" href="#" onclick="loadActivity()">
+                            <i class="bi bi-clock-history me-2"></i> Activity
+                        </a>
+                        <a class="nav-link" href="profile.html">
+                            <i class="bi bi-person me-2"></i> Profile
+                        </a>
+                        <a class="nav-link" href="#" id="adminLink" style="display: none;" onclick="window.location.href='admin.html'">
+                            <i class="bi bi-shield me-2"></i> Admin Panel
+                        </a>
+                        <hr class="bg-white">
+                        <a class="nav-link text-danger" href="#" id="logoutBtn">
+                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <!-- Welcome Section -->
+                <div class="welcome-section" data-aos="fade-up">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2>Welcome back, <span id="welcomeName">User</span>!</h2>
+                            <p class="mb-0 opacity-75">Here's what's happening with your account today.</p>
+                        </div>
+                        <div class="text-end">
+                            <small>Last Login: <span id="lastLogin">Loading...</span></small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics Cards -->
+                <div class="row mb-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Account Status</h6>
+                                <h4 class="mb-0" id="accountStatus">Active</h4>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="bi bi-calendar"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Member Since</h6>
+                                <h4 class="mb-0" id="memberSince">Loading...</h4>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="bi bi-shield"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Security Score</h6>
+                                <h4 class="mb-0" id="securityScore">95%</h4>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="stat-card d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-1">Session Time</h6>
+                                <h4 class="mb-0" id="sessionTime">00:00</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts Row -->
+                <div class="row mb-4">
+                    <div class="col-md-8 mb-3" data-aos="fade-up" data-aos-delay="200">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Activity Overview</h5>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="activityChart" style="height: 300px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3" data-aos="fade-up" data-aos-delay="300">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="quick-action-card mb-3" onclick="window.location.href='profile.html'">
+                                    <i class="bi bi-person-gear display-6 text-primary"></i>
+                                    <h6 class="mt-2">Update Profile</h6>
+                                </div>
+                                <div class="quick-action-card mb-3" onclick="changePassword()">
+                                    <i class="bi bi-key display-6 text-primary"></i>
+                                    <h6 class="mt-2">Change Password</h6>
+                                </div>
+                                <div class="quick-action-card" onclick="enable2FA()">
+                                    <i class="bi bi-shield-check display-6 text-primary"></i>
+                                    <h6 class="mt-2">Enable 2FA</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Activity and Device Info -->
+                <div class="row">
+                    <div class="col-md-6 mb-3" data-aos="fade-up" data-aos-delay="400">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Recent Activity</h5>
+                                <button class="btn btn-sm btn-outline-primary" onclick="refreshActivity()">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="activity-timeline" id="recentActivity">
+                                    <!-- Activities will be loaded here -->
+                                    <div class="text-center text-muted py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3" data-aos="fade-up" data-aos-delay="500">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0">Device Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="device-card" id="deviceInfo">
+                                    <div class="text-center text-muted py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h6>Recent Devices</h6>
+                                    <div id="recentDevices">
+                                        <!-- Recent devices will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/UAParser.js/0.7.35/ua-parser.min.js"></script>
+    
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+    
+    <script>
+        AOS.init();
+        
+        // Load dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboard();
+            
+            // Check for admin access
+            checkAdminAccess();
+        });
+        
+        // Check if user has admin access
+        async function checkAdminAccess() {
+            const user = auth.currentUser;
+            if (user) {
+                const role = await getUserRole(user.uid);
+                if (role === 'admin') {
+                    document.getElementById('adminLink').style.display = 'block';
+                }
+            }
+        }
+        
+        // Refresh activity
+        function refreshActivity() {
+            loadDashboard();
+        }
+        
+        // Change password
+        async function changePassword() {
+            const { value: email } = await Swal.fire({
+                title: 'Change Password',
+                text: 'Enter your email to receive password reset link',
+                input: 'email',
+                inputValue: auth.currentUser?.email,
+                showCancelButton: true
+            });
+            
+            if (email) {
+                try {
+                    await resetPassword(email);
+                    Swal.fire('Success!', 'Password reset email sent!', 'success');
+                } catch (error) {
+                    Swal.fire('Error!', error.message, 'error');
+                }
+            }
+        }
+        
+        // Enable 2FA
+        function enable2FA() {
+            Swal.fire({
+                title: 'Coming Soon',
+                text: 'Two-factor authentication will be available soon!',
+                icon: 'info',
+                timer: 3000
+            });
+        }
+        
+        // Load analytics section
+        function loadAnalytics() {
+            document.querySelector('.main-content').innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading analytics...</p>
+                </div>
+            `;
+            
+            // Load analytics after a brief delay
+            setTimeout(() => {
+                loadDashboard();
+            }, 2000);
+        }
+        
+        // Load activity section
+        function loadActivity() {
+            document.querySelector('.main-content').innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading activity log...</p>
+                </div>
+            `;
+            
+            // Load activity after a brief delay
+            setTimeout(() => {
+                loadDashboard();
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

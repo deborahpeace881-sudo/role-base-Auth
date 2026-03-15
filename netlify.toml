@@ -1,10 +1,6 @@
 [build]
   publish = "."
-
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  functions = "netlify/functions"
 
 [build.environment]
   FIREBASE_API_KEY = "your-api-key"
@@ -13,3 +9,14 @@
   FIREBASE_STORAGE_BUCKET = "your-storage-bucket"
   FIREBASE_MESSAGING_SENDER_ID = "your-messaging-sender-id"
   FIREBASE_APP_ID = "your-app-id"
+  IPINFO_TOKEN = "your-ipinfo-token"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

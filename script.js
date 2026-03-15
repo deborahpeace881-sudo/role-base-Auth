@@ -222,17 +222,28 @@ async function updateUserRole(userId, newRole) {
 
 // ==================== SECURITY FUNCTIONS ====================
 
-// Get user IP
+// Get user IP using IPinfo API
 async function getUserIP() {
     try {
-        const response = await fetch('https://ipinfo.io/json?token=YOUR_TOKEN_HERE');
+        // For Netlify, we'll use a serverless function or environment variable
+        // Option 1: Use a Netlify function (recommended for production)
+        const response = await fetch('/.netlify/functions/get-ipinfo');
         const data = await response.json();
         userIP = data;
         return data;
     } catch (error) {
         console.error('Error getting IP:', error);
-        userIP = { ip: 'unknown' };
-        return null;
+        
+        // Option 2: Fallback to basic IP (for development only)
+        try {
+            const fallbackResponse = await fetch('https://api.ipify.org?format=json');
+            const fallbackData = await fallbackResponse.json();
+            userIP = { ip: fallbackData.ip, city: 'Unknown', region: 'Unknown', country: 'Unknown' };
+            return userIP;
+        } catch (fallbackError) {
+            userIP = { ip: 'unknown', city: 'Unknown', region: 'Unknown', country: 'Unknown' };
+            return null;
+        }
     }
 }
 
