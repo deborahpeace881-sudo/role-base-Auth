@@ -133,6 +133,95 @@
                 window.location.href = 'dashboard.html';
             }
         });
+
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        // Show loading
+        Swal.fire({
+            title: 'Logging in',
+            text: 'Please wait...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        try {
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            console.log('User logged in:', user.uid); // Debug log
+            
+            // Check if email is verified
+            if (!user.emailVerified) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Email Not Verified',
+                    text: 'Please verify your email before logging in. Check your inbox for verification link.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Resend Verification',
+                    cancelButtonText: 'OK'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        await user.sendEmailVerification();
+                        Swal.fire('Success', 'Verification email sent!', 'success');
+                    }
+                });
+                return;
+            }
+            
+            // Update last login in Firestore
+            await db.collection('users').doc(user.uid).update({
+                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            // Create login log
+            await db.collection('loginLogs').add({
+                userId: user.uid,
+                email: user.email,
+                action: 'login',
+                status: 'success',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Login Successful',
+                text: 'Redirecting to dashboard...',
+                timer: 1500
+            });
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1500);
+            
+        } catch (error) {
+            console.error('Login error:', error);
+            
+            let errorMessage = error.message;
+            
+            if (error.code === 'auth/user-not-found') {
+                errorMessage = 'No account found with this email. Please register first.';
+            } else if (error.code === 'auth/wrong-password') {
+                errorMessage = 'Incorrect password. Please try again.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = 'Invalid email address.';
+            } else if (error.code === 'auth/user-disabled') {
+                errorMessage = 'This account has been disabled.';
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Login Failed',
+                text: errorMessage
+            });
+        }
+    });
     </script>
 </body>
 </html>

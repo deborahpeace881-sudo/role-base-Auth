@@ -403,7 +403,35 @@
                 loadDashboard();
             }, 2000);
         }
-        
+
+        // Check authentication on dashboard load
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                // Not logged in, redirect to login
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            if (!user.emailVerified) {
+                // Email not verified
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Email Not Verified',
+                    text: 'Please verify your email to access the dashboard.',
+                    confirmButtonText: 'Go to Login'
+                }).then(() => {
+                    auth.signOut();
+                    window.location.href = 'login.html';
+                });
+                return;
+            }
+            
+            // User is authenticated and verified, load dashboard
+            console.log('User authenticated:', user.email);
+            loadDashboard();
+        });
+
+                
         // Load activity section
         function loadActivity() {
             document.querySelector('.main-content').innerHTML = `
