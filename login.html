@@ -140,7 +140,6 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         
-        // Show loading
         Swal.fire({
             title: 'Logging in',
             text: 'Please wait...',
@@ -154,74 +153,69 @@
             const userCredential = await auth.signInWithEmailAndPassword(email, password);
             const user = userCredential.user;
             
-            console.log('User logged in:', user.uid); // Debug log
-            
-            // Check if email is verified
+            // TEMPORARY: Bypass email verification for testing
+            // Comment this out in production!
+            /*
             if (!user.emailVerified) {
+                // Show verification warning but still allow login
                 Swal.fire({
                     icon: 'warning',
                     title: 'Email Not Verified',
-                    text: 'Please verify your email before logging in. Check your inbox for verification link.',
+                    text: 'Warning: This email is not verified. For testing purposes, you can still proceed.',
                     showCancelButton: true,
-                    confirmButtonText: 'Resend Verification',
-                    cancelButtonText: 'OK'
+                    confirmButtonText: 'Proceed Anyway',
+                    cancelButtonText: 'Resend Verification'
                 }).then(async (result) => {
                     if (result.isConfirmed) {
+                        // Proceed with login even though email isn't verified
+                        await proceedWithLogin(user);
+                    } else {
+                        // Resend verification email
                         await user.sendEmailVerification();
                         Swal.fire('Success', 'Verification email sent!', 'success');
                     }
                 });
                 return;
             }
+            */
             
-            // Update last login in Firestore
-            await db.collection('users').doc(user.uid).update({
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            // Create login log
-            await db.collection('loginLogs').add({
-                userId: user.uid,
-                email: user.email,
-                action: 'login',
-                status: 'success',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Login Successful',
-                text: 'Redirecting to dashboard...',
-                timer: 1500
-            });
-            
-            // Redirect to dashboard
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1500);
+            // For now, let's just proceed with login (temporary)
+            await proceedWithLogin(user);
             
         } catch (error) {
             console.error('Login error:', error);
-            
-            let errorMessage = error.message;
-            
-            if (error.code === 'auth/user-not-found') {
-                errorMessage = 'No account found with this email. Please register first.';
-            } else if (error.code === 'auth/wrong-password') {
-                errorMessage = 'Incorrect password. Please try again.';
-            } else if (error.code === 'auth/invalid-email') {
-                errorMessage = 'Invalid email address.';
-            } else if (error.code === 'auth/user-disabled') {
-                errorMessage = 'This account has been disabled.';
-            }
-            
             Swal.fire({
                 icon: 'error',
                 title: 'Login Failed',
-                text: errorMessage
+                text: error.message
             });
         }
     });
+
+    async function proceedWithLogin(user) {
+        await db.collection('users').doc(user.uid).update({
+            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        await db.collection('loginLogs').add({
+            userId: user.uid,
+            email: user.email,
+            action: 'login',
+            status: 'success',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        Swal.fire({
+            icon: 'success',
+            title: 'Login Successful',
+            text: 'Redirecting to dashboard...',
+            timer: 1500
+        });
+        
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1500);
+    }
     </script>
 </body>
 </html>
